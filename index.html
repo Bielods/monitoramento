@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monitoramento Ferraz</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#667085;--bd:#e3e6eb;--ac:#2457d6;--ac2:#e8eefc;--ok:#1a7f4b;--rd:#c0392b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--card:#1d2127;--tx:#e8eaee;--mu:#9aa3b2;--bd:#30363f;--ac:#7aa2ff;--ac2:#25304d;--ok:#4cc38a;--rd:#ff7b6b}}
+:root[data-theme="dark"]{--bg:#14171c;--card:#1d2127;--tx:#e8eaee;--mu:#9aa3b2;--bd:#30363f;--ac:#7aa2ff;--ac2:#25304d;--ok:#4cc38a;--rd:#ff7b6b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 2px}.sub{color:var(--mu);font-size:13px;margin-bottom:14px}
+nav{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+nav button{border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px}
+input,select{font:inherit;padding:7px 9px;border:1px solid var(--bd);border-radius:7px;background:var(--bg);color:var(--tx);min-width:130px}
+.btn{background:var(--ac);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+.btn.g{background:var(--ac2);color:var(--ac)}.x{background:none;border:0;color:var(--rd);cursor:pointer;font-size:16px}
+.sc{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left;white-space:nowrap}
+th{color:var(--mu);font-weight:600;position:sticky;top:0;background:var(--card)}
+td input{min-width:0;width:100%;padding:3px 5px;font-size:12px}
+.bar{height:10px;border-radius:5px;background:var(--ac);min-width:4px}
+.pos{font-weight:700;width:34px}.st{color:var(--mu);font-style:italic}
+.empty{color:var(--mu);padding:18px;text-align:center}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.kpi div{flex:1;min-width:120px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px}
+.kpi b{display:block;font-size:22px}.kpi span{color:var(--mu);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>Monitoramento Ferraz</h1>
+<div class="sub">Frota, linhas por dia, operadores e ocorrências de motoristas</div>
+<nav id="nav"></nav>
+<div id="v"></div>
+</main>
+<script>
+var TIPOS=["Atraso","Avaria","Acidente","Desvio de rota","Reclamação","Outro"];
+var DIAS=["24/01","25/01","26/01","27/01","28/01","29/01","30/01"];
+var SA="Sem Arquivo",NG="Não Saiu da Garagem";
+function R(p,o,d){return {p:p,op:o,d:d.split("|")}}
+function S(p,t){return {p:p,op:"",d:[t,"","","","","",""]}}
+var MAT0=[
+R("2","Andressa","002, 005, 005-BI|-|002|002|004|002|002, 005"),R("4","Marina","002|002|002|002|002|-|-"),
+R("6","Felipe","-|-|005, 005-BI|005, 005-BI|005, 005-BI|005, 005-BI|005, 005-BI"),R("8","Andressa","003|003|003|003|003|003|003"),
+R("10","","003|003|003|001-DV|003|003|003"),S("12",SA),S("14",SA),S("16",SA),R("18","Jonata","005|005|005|005|005|005|005"),
+R("20","Felipe","003, 004-DV|-|004-DV|004-DV|004-DV|004-DV|004-DV"),R("22","Andressa","007|-|007|007|007|-|006"),
+R("24","","001-DV|-|001-DV, 004|006|001-DV|003-DV1|002"),R("36","Jonata","006|-|001-DV|004-BI|004-BI|004-BI|003-DV1"),
+R("42","","001-DV|-|006|001-DV|-|-|-"),R("48","Marina","006|-|005|003, 003-DV1, 006-VP|001-DV|003|007"),
+R("64","","004|004|004|004|002, 004|004|004"),S("66",NG),R("68","","-|-|003-DV1|-|-|-|-"),
+R("70","Andressa","-|-|006|001-DV|001-DV, 004|003|001-DV, 004"),R("72","Marina","001, 004|-|001, 004|-|003|001-DV|-"),
+R("74","","-|-|-|-|-|001-DV|-"),R("76","Felipe","004|-|004|004|004|004|004"),R("78","","-|-|-|-|003-DV1|007|-"),
+R("80","","-|-|004-BI, 006-VP|004-BI, 006-VP|004-BI, 006-VP|004-BI, 006-VP|004-BI, 006-VP"),S("82",SA),
+R("88","","004|-|-|-|003-DV1|006|004"),R("90","","004-BI|-|002|003-DV1|002|003-DV1|001"),
+R("92","Felipe","004-BI|004-BI|-|002, 004|004-BI|003, 003-DV1, 006-VP|001-DV"),S("94",SA),
+R("96","","-|006|003-DV1, 006-VP|002|003, 003-DV1, 006-VP|002, 003-DV1|003, 003-DV1, 006-VP"),S("98",SA),S("100",SA),
+R("104","","-|-|002|006|006|006|006"),R("106","","006|003-DV1, 004|006|006|006|002|003-DV1"),
+R("108","Marina","006|001, 002|006|006|006|006|006"),R("110","","-|-|006|006|006|006|006"),R("112","","-|-|006|006|006|006|006"),
+R("114","","003-DV1|003-DV1|003-DV1|003|003-DV1|003-DV1|-"),R("116","","003-DV1|003, 003-DV1|003-DV1|003-DV1|003-DV1|005|003-DV1"),
+S("118",SA),R("120","","002, 005-BI|-|004|004|004|004|004"),S("122",SA)];
+var K="mf-v1",st={mat:MAT0,occ:[]},tab="rank",f={ini:"",fim:"",tipo:""};
+try{var s=localStorage.getItem(K);if(s)st=JSON.parse(s)}catch(e){}
+function save(){try{localStorage.setItem(K,JSON.stringify(st))}catch(e){}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function $(i){return document.getElementById(i)}
+function br(d){var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+function nav(){var t=[["rank","Ranking"],["occ","Ocorrências"],["mat","Planilha"]];
+$("nav").innerHTML=t.map(function(x){return '<button class="'+(tab==x[0]?"on":"")+'" data-t="'+x[0]+'">'+x[1]+"</button>"}).join("");
+[].forEach.call($("nav").children,function(b){b.onclick=function(){tab=b.dataset.t;draw()}})}
+function filt(){return st.occ.filter(function(o){return(!f.ini||o.data>=f.ini)&&(!f.fim||o.data<=f.fim)&&(!f.tipo||o.tipo==f.tipo)})}
+function rank(){var m={};filt().forEach(function(o){var k=o.motorista.trim();if(!k)return;m[k]=m[k]||{n:k,c:0,t:{}};m[k].c++;m[k].t[o.tipo]=(m[k].t[o.tipo]||0)+1});
+return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return b.c-a.c||a.n.localeCompare(b.n)})}
+function filtros(){return '<div class="row"><label>De<input type="date" id="fi" value="'+f.ini+'"></label><label>Até<input type="date" id="ff" value="'+f.fim+'"></label><label>Tipo<select id="ft"><option value="">Todos</option>'+TIPOS.map(function(t){return"<option"+(f.tipo==t?" selected":"")+">"+t+"</option>"}).join("")+"</select></label></div>"}
+function bindF(){["fi","ff","ft"].forEach(function(i){$(i).onchange=function(){f.ini=$("fi").value;f.fim=$("ff").value;f.tipo=$("ft").value;draw()}})}
+function vRank(){var r=rank(),mx=r.length?r[0].c:1,tot=filt().length,pr={};filt().forEach(function(o){pr[o.prefixo]=(pr[o.prefixo]||0)+1});
+var top=Object.keys(pr).sort(function(a,b){return pr[b]-pr[a]})[0];
+var h='<div class="kpi"><div><b>'+tot+'</b><span>ocorrências no filtro</span></div><div><b>'+r.length+'</b><span>motoristas com registro</span></div><div><b>'+(top?esc(top):"–")+'</b><span>prefixo com mais ocorrências</span></div></div>';
+h+='<div class="card">'+filtros()+"</div><div class=\"card sc\">";
+if(!r.length)h+='<div class="empty">Nenhuma ocorrência ainda. Registre na aba Ocorrências.</div>';
+else h+="<table><tr><th>#</th><th>Motorista</th><th>Ocorrências</th><th style='width:35%'></th><th>Por tipo</th></tr>"+r.map(function(x,i){
+return '<tr><td class="pos">'+(i<3?["🥇","🥈","🥉"][i]:i+1)+"</td><td>"+esc(x.n)+"</td><td><b>"+x.c+'</b></td><td><div class="bar" style="width:'+Math.round(x.c/mx*100)+'%"></div></td><td>'+Object.keys(x.t).map(function(t){return t+" "+x.t[t]}).join(" · ")+"</td></tr>"}).join("")+"</table>";
+return h+"</div>"}
+function vOcc(){var pf=st.mat.map(function(m){return m.p});
+var h='<div class="card"><div class="row"><label>Data<input type="date" id="od" value="'+new Date().toISOString().slice(0,10)+'"></label>'+
+'<label>Prefixo<input id="op" list="pl" placeholder="ex.: 24"></label><datalist id="pl">'+pf.map(function(p){return'<option value="'+p+'">'}).join("")+"</datalist>"+
+'<label>Motorista<input id="om" list="ml" placeholder="nome"></label><datalist id="ml">'+uniq(st.occ.map(function(o){return o.motorista})).map(function(n){return'<option value="'+esc(n)+'">'}).join("")+"</datalist>"+
+'<label>Tipo<select id="ot">'+TIPOS.map(function(t){return"<option>"+t+"</option>"}).join("")+'</select></label><label style="flex:1">Observação<input id="ob"></label>'+
+'<button class="btn" id="add">Registrar</button></div></div>';
+var l=st.occ.slice().sort(function(a,b){return b.data.localeCompare(a.data)});
+h+='<div class="row" style="margin-bottom:10px"><button class="btn g" id="csv">Exportar CSV</button><button class="btn g" id="demo">Carregar exemplos</button><button class="btn g" id="clr">Limpar ocorrências</button></div><div class="card sc">';
+if(!l.length)h+='<div class="empty">Sem ocorrências registradas.</div>';
+else h+="<table><tr><th>Data</th><th>Prefixo</th><th>Motorista</th><th>Tipo</th><th>Obs.</th><th></th></tr>"+l.map(function(o){return"<tr><td>"+br(o.data)+"</td><td>"+esc(o.prefixo)+"</td><td>"+esc(o.motorista)+"</td><td>"+esc(o.tipo)+"</td><td>"+esc(o.obs||"")+'</td><td><button class="x" data-id="'+o.id+'">✕</button></td></tr>'}).join("")+"</table>";
+return h+"</div>"}
+function uniq(a){return a.filter(function(v,i){return v&&a.indexOf(v)==i})}
+function bindO(){$("add").onclick=function(){var m=$("om").value.trim(),p=$("op").value.trim(),d=$("od").value;if(!m||!p||!d){alert("Informe data, prefixo e motorista.");return}
+st.occ.push({id:Date.now()+"",data:d,prefixo:p,motorista:m,tipo:$("ot").value,obs:$("ob").value.trim()});save();draw()};
+[].forEach.call(document.querySelectorAll(".x"),function(b){b.onclick=function(){st.occ=st.occ.filter(function(o){return o.id!=b.dataset.id});save();draw()}});
+$("csv").onclick=function(){var c="data,prefixo,motorista,tipo,obs\n"+st.occ.map(function(o){return[o.data,o.prefixo,o.motorista,o.tipo,o.obs||""].map(function(v){return'"'+String(v).replace(/"/g,'""')+'"'}).join(",")}).join("\n");
+var a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(c);a.download="ocorrencias.csv";a.click()};
+$("demo").onclick=function(){var n=["Carlos","Roberto","Josiane","Edson"],p=["24","70","96","106","108"],k=0;
+for(var i=0;i<12;i++){k=(k*7+3+i)%97;st.occ.push({id:"d"+Date.now()+i,data:"2026-01-"+(24+i%7),prefixo:p[k%5],motorista:n[k%4],tipo:TIPOS[k%5],obs:"exemplo"})}save();draw()};
+$("clr").onclick=function(){if(confirm("Apagar todas as ocorrências?")){st.occ=[];save();draw()}}}
+function vMat(){var h='<div class="card sc"><table><tr><th>Prefixo</th>'+DIAS.map(function(d){return"<th>"+d+"</th>"}).join("")+"<th>Operador</th></tr>";
+st.mat.forEach(function(m,i){var s=m.d[0]==SA||m.d[0]==NG;h+="<tr><td><b>"+esc(m.p)+"</b></td>";
+if(s)h+='<td colspan="7" class="st">'+esc(m.d[0])+"</td>";else m.d.forEach(function(v,j){h+='<td><input data-i="'+i+'" data-j="'+j+'" value="'+esc(v)+'"></td>'});
+h+='<td><input data-i="'+i+'" data-j="op" value="'+esc(m.op)+'"></td></tr>'});return h+"</table></div>"}
+function bindM(){[].forEach.call(document.querySelectorAll("td input"),function(e){e.onchange=function(){var m=st.mat[e.dataset.i];if(e.dataset.j=="op")m.op=e.value;else m.d[e.dataset.j]=e.value;save()}})}
+function draw(){nav();var v=$("v");
+if(tab=="rank"){v.innerHTML=vRank();bindF()}else if(tab=="occ"){v.innerHTML=vOcc();bindO()}else{v.innerHTML=vMat();bindM()}}
+draw();
+</script>
+</body>
+</html>
