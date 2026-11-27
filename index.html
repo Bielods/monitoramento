@@ -43,7 +43,7 @@ textarea{width:100%;min-height:260px;font-family:ui-monospace,Menlo,Consolas,mon
 <div id="tt"></div>
 <script>
 /* ===== CONFIGURAÇÃO: cole aqui a URL e a chave "anon/publishable" do seu projeto Supabase ===== */
-var CFG={url:"https://owbfihupyrbnzaiztawl.supabase.co",key:"COLE_AQUI_A_CHAVE"};
+var CFG={url:"https://owbfihupyrbnzaiztawl.supabase.co",key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93YmZpaHVweXJibnphaXp0YXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU2MzMxMjEsImV4cCI6MjExMTIwOTEyMX0.gjm1j-Vo1S1AK4XuxZN8GURhkDarCF5IHJmpX6Fqqsk"};
 /* ================================================================================================ */
 var LIN=["001","001-DV","002","003","003-DV1","004","004-BI","004-DV","005","005-BI","006","006-VP","007","Não Saiu Da Garagem","Sem Arquivo"],SA="Sem Arquivo",NG="Não Saiu Da Garagem";
 var PFX="2,4,6,8,10,12,14,16,18,20,22,24,64,66,68,70,72,74,76,78,80,82,88,90,92,94,96,98,100,104,106,108,110,112,114,116,118,120,122,124,126,128,130,132,134,136".split(",");
@@ -55,7 +55,7 @@ function $(i){return document.getElementById(i)}function V(i){return $(i).value}
 function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function opt(a,sel){return a.map(function(x){return"<option"+(x==sel?" selected":"")+">"+esc(x)+"</option>"}).join("")}
 function real(a){return a&&a.length>0&&a[0]!=SA&&a[0]!=NG}
-var S=null,ME=null,D={carros:{},occ:[],sin:[],rec:[],mes:[],ops:[]},tab="occ",f={ini:"",fim:"",tipo:""},week=today(),rd=today(),seen={sin:0,rec:0},known={sin:null,rec:null},mon=today().slice(0,7),timer=null,ok=CFG.url.indexOf("http")==0;
+var S=null,ME=null,D={carros:{},occ:[],sin:[],rec:[],mes:[],ops:[]},tab="occ",f={ini:"",fim:"",tipo:""},week=today(),rd=today(),seen={sin:0,rec:0},known={sin:null,rec:null},mon=today().slice(0,7),timer=null,ok=CFG.url.indexOf("http")==0&&CFG.key.indexOf("COLE")<0;
 try{S=JSON.parse(localStorage.getItem("mf-s")||"null")}catch(e){}
 function ssave(){try{localStorage.setItem("mf-s",JSON.stringify(S))}catch(e){}}
 function toast(m,err){var t=$("tt");t.textContent=m;t.style.background=err?"var(--rd)":"var(--ac)";t.style.display="block";clearTimeout(toast.k);toast.k=setTimeout(function(){t.style.display="none"},err?7000:12000)}
@@ -65,7 +65,7 @@ if(r.status==401&&S&&!o.retry){if(await refresh())return api(path,Object.assign(
 if(!r.ok)throw new Error(await r.text());var t=await r.text();return t?JSON.parse(t):null}
 async function refresh(){try{var r=await fetch(CFG.url+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:CFG.key,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:S.refresh_token})});if(!r.ok)return false;S=await r.json();ssave();return true}catch(e){return false}}
 async function doLogin(e,p){var r=await fetch(CFG.url+"/auth/v1/token?grant_type=password",{method:"POST",headers:{apikey:CFG.key,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})});
-if(!r.ok)throw new Error("E-mail ou senha inválidos.");S=await r.json();ssave();await boot()}
+if(!r.ok){var j={};try{j=await r.json()}catch(x){}throw new Error(j.error_code=="invalid_credentials"?"E-mail ou senha inválidos.":"Falha no login ("+r.status+"): "+(j.msg||j.message||j.error_description||"verifique a chave no CFG"))}S=await r.json();ssave();await boot()}
 function out(){S=null;ME=null;clearInterval(timer);try{localStorage.removeItem("mf-s")}catch(e){}draw()}
 async function boot(){try{var p=await api("/rest/v1/perfis?select=*&id=eq."+S.user.id);if(!p.length){toast("Usuário sem perfil cadastrado. Fale com o administrador.",1);out();return}
 ME=p[0];D.ops=(await api("/rest/v1/perfis?select=nome&papel=eq.operador")).map(function(x){return x.nome});tab=tabsFor()[0][0];await loadCore();
